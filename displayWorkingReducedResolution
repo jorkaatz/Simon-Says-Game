@@ -1,0 +1,598 @@
+#include <TVout.h>
+#include <fontALL.h>
+#include <avr/pgmspace.h>
+#include <Wire.h>
+
+#define I2C_SLAVE
+#define SLAVE_ADDR 9
+
+
+
+
+TVout TV;
+
+void drawButton(byte but) {/*
+  char buffer[20];
+  const char* label;
+
+  switch (but) {
+    case 0:  //A button
+      label = aButton;
+      break;
+    case 1:  // - button
+      label = mButton;
+      break;
+    case 2:  // + button
+      label = pButton;
+      break;
+    case 3:  // 1 button
+      label = oneButton;
+      break;
+    case 4:  // 2 button
+      label = twoButton;
+      break;
+    case 5:  //B button
+      label = bButton;
+      break;
+    case 6:  //Home button
+      label = hButton;
+      break;
+    default:
+      return;  // Invalid button
+  }
+
+  strcpy_P(buffer, (char*)label);  // Copy label from flash memory
+  TV.println(buffer);
+  TV.draw_circle(57, 39, 6, WHITE);
+  */
+}
+
+void drawArrow(byte dir) {/*
+  uint8_t x = 40, y = 30, w = 35, h = 15;  //rectangle starting point and W/H
+  uint8_t xCen = x + w / 2, yCen = y + h / 2, temp;
+  uint8_t lineOff = 7, pointOff = 13;
+  uint8_t lx0, ly0, lx1, ly1, mx0, my0, mx1, my1, nx0, ny0, nx1, ny1;
+
+  switch (dir) {
+    case 5:  //up arrow
+      y = yCen - w / 2;
+      x = xCen - h / 2;
+      temp = w;
+      w = h;
+      h = temp;
+      lx0 = x - lineOff;
+      ly0 = y;
+      lx1 = x + w + lineOff;
+      ly1 = y;
+      mx0 = lx0;
+      my0 = ly0;
+      mx1 = xCen;
+      my1 = my0 - pointOff;
+      nx0 = lx1;
+      ny0 = ly1;
+      nx1 = mx1;
+      ny1 = my1;
+      break;
+    case 6:  //right arrow
+      lx0 = x + w;
+      ly0 = y - lineOff;
+      lx1 = x + w;
+      ly1 = y + h + lineOff;
+      mx0 = lx0;
+      my0 = ly0;
+      mx1 = lx0 + pointOff;
+      my1 = yCen;
+      nx0 = lx1;
+      ny0 = ly1;
+      nx1 = mx1;
+      ny1 = my1;
+      break;
+    case 7:  //down arrow
+      y = yCen - w / 2;
+      x = xCen - h / 2;
+      temp = w;
+      w = h;
+      h = temp;
+      lx0 = x - lineOff;
+      ly0 = y + h;
+      lx1 = x + lineOff + w;
+      ly1 = y + h;
+      mx0 = lx0;
+      my0 = ly0;
+      mx1 = xCen;
+      my1 = ly1 + pointOff;
+      nx0 = lx1;
+      ny0 = ly1;
+      nx1 = mx1;
+      ny1 = my1;
+      break;
+    case 8:  //left arrow
+      lx0 = x;
+      ly0 = y - lineOff;
+      lx1 = x;
+      ly1 = y + h + lineOff;
+      mx0 = lx0;
+      my0 = ly0;
+      mx1 = lx0 - pointOff;
+      my1 = yCen;
+      nx0 = lx1;
+      ny0 = ly1;
+      nx1 = mx1;
+      ny1 = my1;
+      break;
+  }
+
+  TV.draw_rect(x, y, w, h, WHITE, WHITE);  // Draw rotated rectangle
+  TV.draw_line(lx0, ly0, lx1, ly1, WHITE);
+  TV.draw_line(mx0, my0, mx1, my1, WHITE);
+  TV.draw_line(nx0, ny0, nx1, ny1, WHITE);
+  */
+}
+
+void setup() {
+  Wire.begin(SLAVE_ADDR);
+  Wire.onReceive(receiveEvent);
+
+
+
+  //Serial.begin(9600);
+  TV.begin(NTSC, 92, 30);
+  TV.select_font(font8x8);
+  // TV.println("TEST");
+}
+int count = -1;
+
+void receiveEvent() {
+
+  while (0 < Wire.available()) {
+
+    count = Wire.read();
+    //TV.println(count);
+
+
+    //TV.println("test");
+    //Serial.println(count);
+  }
+  //Serial.println(count);
+}
+
+enum EX_States { preReady,
+                 ready,
+                 pre,
+                 pre1,
+                 pre2,
+                 menu,
+                 timedMode,
+                 infiniteMode,
+                 r,
+                 s,
+                 g,
+                 home,
+                 a,
+                 b,
+                 m,
+                 p,
+                 one,
+                 two,
+                 up,
+                 down,
+                 left,
+                 right,
+                 su,
+                 sd,
+                 sl,
+                 sr,
+                 sf,
+                 sb,
+                 gameWon,
+                 gameOver } EX_State;
+
+
+int transition(int count) {
+  //count = -1;
+  switch (count) {
+    case -1:
+      return preReady;
+    case 0:
+      return up;
+    case 1:
+      return down;
+    case 2:
+      return left;
+    case 3:
+      return right;
+    case 4:
+      return p;
+    case 5:
+      return m;
+    case 6:
+      return one;
+    case 7:
+      return two;
+    case 8:
+      return a;
+    case 9:
+      return b;
+    case 10:
+      return home;
+    case 11:
+      return su;
+    case 12:
+      return sd;
+    case 13:
+      return sf;
+    case 14:
+      return sb;
+    case 15:
+      return sl;
+    case 16:
+      return sr;
+    case 17:
+      return menu;
+    case 18:
+      return timedMode;
+    case 19:
+      return infiniteMode;
+    case 20:
+      return ready;
+    case 21:
+      return gameWon;
+    case 22:
+      return gameOver;
+  }
+  return preReady;
+}
+
+void EX_Tick() {
+  //char buffer[20];
+
+  switch (EX_State) {
+    case preReady:
+      if (count != -1) {
+        EX_State = transition(count);
+        TV.clear_screen();
+        //TV.println("test");
+      }
+
+      break;
+    case ready:
+
+
+
+      EX_State = preReady;
+
+      break;
+
+    case pre:
+      EX_State = preReady;
+
+      break;
+
+    case pre1:
+      EX_State = preReady;
+
+      break;
+
+    case pre2:
+      EX_State = preReady;
+
+      break;
+
+    case menu:
+      EX_State = preReady;
+
+      break;
+
+    case timedMode:
+      EX_State = preReady;
+
+      break;
+
+    case infiniteMode:
+      EX_State = preReady;
+
+      break;
+
+    case r:
+      EX_State = preReady;
+
+      break;
+
+    case s:
+      EX_State = preReady;
+
+      break;
+
+    case g:
+      EX_State = preReady;
+
+      break;
+
+    case a:
+      EX_State = preReady;
+
+      break;
+    case b:
+      EX_State = preReady;
+
+      break;
+
+    case home:
+      EX_State = preReady;
+
+      break;
+    case m:
+      EX_State = preReady;
+
+      break;
+
+    case p:
+      EX_State = preReady;
+
+      break;
+
+    case one:
+      EX_State = preReady;
+
+      break;
+
+    case two:
+      EX_State = preReady;
+
+      break;
+
+    case up:
+      EX_State = preReady;
+
+      break;
+
+    case down:
+      EX_State = preReady;
+
+      break;
+
+    case left:
+      EX_State = preReady;
+
+      break;
+
+    case right:
+      EX_State = preReady;
+
+      break;
+
+    case su:
+      EX_State = preReady;
+
+      break;
+
+    case sd:
+      EX_State = preReady;
+
+      break;
+
+    case sl:
+      EX_State = preReady;
+
+      break;
+
+    case sr:
+      EX_State = preReady;
+
+      break;
+
+    case sf:
+      EX_State = preReady;
+
+      break;
+
+    case sb:
+      EX_State = preReady;
+
+      break;
+
+    case gameWon:
+      EX_State = preReady;
+
+      break;
+
+    case gameOver:
+      EX_State = preReady;
+
+      break;
+
+    default:
+
+      break;
+  }
+
+  switch (EX_State) {
+
+    case preReady:
+      //does nothing to screen, transitions only
+      break;
+
+    case ready:
+      TV.clear_screen();
+      break;
+
+    case pre:
+
+     
+      count = -1;
+      break;
+
+    case pre1:
+
+
+      count = -1;
+      break;
+
+    case pre2:
+
+
+    
+      count = -1;
+      break;
+
+    case menu:
+
+      
+      TV.println("1 Timed\n2 Infinite");
+      count = -1;
+   
+      //count = -1;
+      break;
+
+    case timedMode:
+      TV.println("TIMED\nSTART");
+      
+      count = -1;
+      break;
+
+    case infiniteMode:
+
+      TV.println("INFINITE\nSTART");
+      count = -1;
+      break;
+
+    case r:
+
+      
+      count = -1;
+      break;
+
+    case s:
+
+   
+      count = -1;
+      break;
+
+    case g:
+
+     
+      count = -1;
+      break;
+
+    case a:
+      TV.println("PRESS\nA!");
+      count = -1;
+
+      break;
+
+    case b:
+      TV.println("PRESS\nB!");
+      count = -1;
+      break;
+
+    case home:
+      TV.println("PRESS\nHOME!");
+      count = -1;
+      break;
+
+    case m:
+      TV.println("PRESS\nMINUS!");
+      count = -1;
+      break;
+
+    case p:
+      TV.println("PRESS\nPLUS!");
+      count = -1;
+      break;
+
+    case one:
+      TV.println("PRESS\n1!");
+      count = -1;
+      break;
+
+    case two:
+      TV.println("PRESS\n2!");
+      count = -1;
+      break;
+
+    case up:
+      TV.println("PRESS\nUP!");
+      count = -1;
+      break;
+
+    case down:
+      TV.println("PRESS\nDOWN!");
+      count = -1;
+      break;
+
+    case left:
+      TV.println("PRESS\nLEFT!");
+      count = -1;
+      break;
+
+    case right:
+      TV.println("PRESS\nRIGHT!");
+      count = -1;
+      break;
+
+    case su:
+
+      TV.println("SWING\nUP!");
+      count = -1;
+      break;
+
+    case sd:
+
+      TV.println("SWING\nDOWN!");
+      
+      count = -1;
+      break;
+
+    case sl:
+
+      TV.println("SWING\nLEFT!");
+      count = -1;
+      break;
+
+    case sr:
+
+      TV.println("SWING\nRIGHT!");
+      count = -1;
+      break;
+    case sf:
+
+      TV.println("SWING\nFORWARD!");
+      count = -1;
+      break;
+
+    case sb:
+
+      TV.println("SWING\nBACK!");
+      count = -1;
+      break;
+
+    case gameWon:
+      TV.println("YOU\nWON!");
+      count = -1;
+    
+      break;
+
+    case gameOver:
+      TV.println("YOU\nLOST!");
+      count = -1;
+    
+      break;
+
+    default:
+
+      break;
+  }
+}
+
+
+
+
+void loop() {
+
+
+
+
+
+
+  EX_Tick();
+}
